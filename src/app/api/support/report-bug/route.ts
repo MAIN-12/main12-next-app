@@ -71,6 +71,29 @@
 import { NextResponse } from "next/server"
 
 export async function POST(request: Request) {
+  const allowedOrigins = [
+    "https://app.nubi.com.co",
+    "https://another-allowed-origin.com"
+  ];
+
+  const origin = request.headers.get("origin") || "";
+
+  if (!allowedOrigins.includes(origin)) {
+    return new NextResponse(null, {
+      status: 403,
+      statusText: "Forbidden",
+      headers: {
+        "Content-Type": "text/plain",
+      },
+    });
+  }
+
+  const headers = {
+    "Access-Control-Allow-Origin": origin,
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
+  };
+
   const apiKey = process.env.MONDAY_API_KEY
   if (!apiKey) {
     console.error("API key is missing")
@@ -183,10 +206,10 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, id: itemId, fileUploads: fileUploadResults })
+    return NextResponse.json({ success: true, id: itemId, fileUploads: fileUploadResults }, { status: 200, headers })
   } catch (error) {
     console.error("Failed to submit bug report:", error)
-    return NextResponse.json({ error: "Failed to submit bug report" }, { status: 500 })
+    return NextResponse.json({ error: "Failed to submit bug report" }, { status: 500, headers })
   }
 }
 

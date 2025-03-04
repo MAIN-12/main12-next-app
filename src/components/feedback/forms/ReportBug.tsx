@@ -1,55 +1,72 @@
 "use client"
 
-import React from "react"
+import React, { useState, useEffect } from "react"
 import { Button, Input, Textarea, Spacer, RadioGroup, Radio } from "@heroui/react"
 import { motion } from "framer-motion"
-import { useUser } from "@auth0/nextjs-auth0/client"
-import { useTranslations } from "next-intl"
-import { Disclaimer } from "./Disclaimer"
 
-interface BugFormData {
-  user?: any
-  title: string
-  description: string
-  location: string
-}
+import { useUser } from "../auth/useUser";
+import { useTranslations } from "../locales/getTranslations";
+import { Disclaimer } from "../Disclaimer"
 
 const ReportBug: React.FC = () => {
   const { user } = useUser()
-  const [title, setTitle] = React.useState("")
-  const [description, setDescription] = React.useState("")
-  const [isCurrentPage, setIsCurrentPage] = React.useState("yes")
-  const [location, setLocation] = React.useState("")
-  const [isSubmitting, setIsSubmitting] = React.useState(false)
-  const [successMessage, setSuccessMessage] = React.useState("")
-  const [errorMessage, setErrorMessage] = React.useState("")
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [isCurrentPage, setIsCurrentPage] = useState("yes")
+  const [location, setLocation] = useState("")
+  const [files, setFiles] = useState<File[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [successMessage, setSuccessMessage] = useState("")
+  const [errorMessage, setErrorMessage] = useState("")
   const t = useTranslations("ReportBug")
+  const app_name = process.env.NEXT_PUBLIC_APP_NAME || globalThis.location?.origin || "Not defined";
 
-  React.useEffect(() => {
+  useEffect(() => {
     setLocation(window.location.href)
   }, [])
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files)
+      const validFiles = newFiles.filter((file) => file.size <= 20 * 1024 * 1024) // 20MB limit
+      setFiles((prevFiles) => [...prevFiles, ...validFiles])
+      if (newFiles.length !== validFiles.length) {
+        setErrorMessage("Some files exceeded the 20MB size limit and were not added.")
+      }
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     setErrorMessage("")
 
-    const formData: BugFormData = { title, user, description, location }
+    const formData = new FormData()
+    formData.append("app_name", app_name)
+    formData.append("title", title)
+    formData.append("description", description)
+    formData.append("location", location)
+    if (user) {
+      formData.append("user", JSON.stringify(user))
+    }
+    files.forEach((file) => formData.append("files", file))
 
     try {
       const response = await fetch("/api/support/report-bug", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+        body: formData,
       })
 
       const result = await response.json()
 
       if (response.ok) {
         setSuccessMessage("Bug report submitted successfully.")
-        setErrorMessage("")
+        if (result.fileUploads) {
+          const failedUploads = result.fileUploads.filter((upload: any) => !upload.success)
+          if (failedUploads.length > 0) {
+            setErrorMessage(`Some files failed to upload: ${failedUploads.map((u: any) => u.name).join(", ")}`)
+          }
+        }
         resetForm()
       } else {
         throw new Error(result.error || "Failed to submit bug report")
@@ -70,6 +87,10 @@ const ReportBug: React.FC = () => {
     setDescription("")
     setLocation(window.location.href)
     setIsCurrentPage("yes")
+    setFiles([])
+    // Reset file input by clearing its value
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
+    if (fileInput) fileInput.value = ""
   }
 
   return (
@@ -112,15 +133,18 @@ const ReportBug: React.FC = () => {
           />
         )}
         <Spacer y={3} />
-        <Input
-          type="file"
-          // label="Add a file file"
-          // value={location}
-          // onChange={(e) => setLocation(e.target.value)}
-          fullWidth
-        />
+        <Input type="file" label={t("attachFiles")} onChange={handleFileChange} multiple fullWidth />
+        {files.length > 0 && (
+          <ul className="text-sm text-gray-600 mt-1">
+            {files.map((file, index) => (
+              <li key={index}>
+                {file.name} ({(file.size / 1024).toFixed(2)} KB)
+              </li>
+            ))}
+          </ul>
+        )}
         <Spacer y={3} />
-        <Button type="submit" disabled={isSubmitting} fullWidth color="primary">
+        <Button type="submit" isLoading={isSubmitting} fullWidth color="primary" className="text-primary-foreground">
           {isSubmitting ? t("submitting") : t("submitButton")}
         </Button>
         <Disclaimer />

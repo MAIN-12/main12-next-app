@@ -8,16 +8,14 @@ import {
     ModalFooter,
     Button
 } from "@heroui/react";
-import { useTranslations } from 'next-intl';
-import { BugReport, Lightbulb, Feedback, HelpOutline } from '@mui/icons-material';
 
-import BackArrowIcon from '../icons/BackArrow';
-
-import ReportBug from "./ReportBug";
-import ProvideFeedback from "./ProvideFeedback";
-import RequestFeature from "./RequestFeature";
-import RequestHelp from "./RequestHelp";
-
+import { useTranslations } from "./locales/getTranslations";
+import { BugReport, Lightbulb, Feedback, Help } from "./icons/SupportIcons";
+import BackArrowIcon from './icons/BackArrow';
+import ReportBug from "./forms/ReportBug";
+import ProvideFeedback from "./forms/ProvideFeedback";
+import RequestFeature from "./forms/RequestFeature";
+import RequestSupport from "./forms/RequestSupport";
 
 interface SupportModalProps {
     isOpen: boolean;
@@ -28,13 +26,8 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onOpenChange }) => 
     const t = useTranslations('FeedBackModal');
     const [currentView, setCurrentView] = useState<string>("");
 
-    const handleButtonClick = (view: string) => {
-        setCurrentView(view);
-    };
-
-    const handleBackClick = () => {
-        setCurrentView("");
-    };
+    const handleButtonClick = (view: string) => {setCurrentView(view);};
+    const handleBackClick = () => {setCurrentView("");};
 
     const buttons = [
         {
@@ -54,13 +47,13 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onOpenChange }) => 
         },
         {
             id: 'Help',
-            icon: <HelpOutline />,
+            icon: <Help />,
             label: t('help'),
         },
     ];
 
     return (
-        <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+        <Modal isOpen={isOpen} onOpenChange={onOpenChange} className="bg-light dark:bg-dark">
             <ModalContent>
                 <ModalHeader className="flex flex-col">
                     {currentView !== "" ? (
@@ -101,9 +94,9 @@ const SupportModal: React.FC<SupportModalProps> = ({ isOpen, onOpenChange }) => 
                     {currentView === "bug" && (<ReportBug />)}
                     {currentView === "feature" && (<RequestFeature />)}
                     {currentView === "feedback" && (<ProvideFeedback />)}
-                    {currentView === "Help" && (<RequestHelp />)}
+                    {currentView === "Help" && (<RequestSupport />)}
                 </ModalBody>
-                <ModalFooter className="z-[1000] bg-white dark:bg-darkBackground">
+                <ModalFooter className="z-[1000] bg-light dark:bg-dark">
                     <p className="mt-3 text-sm text-center w-full">Powerd by <a href="https://main12.com" target="_blank" rel="noopener noreferrer" className="text-blue-500">Main 12 LLC</a></p>
                 </ModalFooter>
             </ModalContent>

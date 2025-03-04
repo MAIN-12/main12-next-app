@@ -7,12 +7,11 @@ const translationsMap: Record<string, any> = {
     es,
 };
 
-function detectLocale(): string {
+// Custom hook to detect locale
+function useDetectedLocale(): string {
     try {
-        // Attempt to get the locale from next-intl
         return useLocale();
     } catch (error) {
-        // If useLocale is not available, check the URL
         if (typeof window !== "undefined") {
             const urlParams = new URLSearchParams(window.location.search);
             const urlLocale = urlParams.get("locale");
@@ -20,8 +19,7 @@ function detectLocale(): string {
                 return urlLocale;
             }
         }
-        // Default fallback to English
-        return "en";
+        return "en"; // Default fallback
     }
 }
 
@@ -30,7 +28,7 @@ export function getTranslations(locale: string) {
 }
 
 export function useTranslations(component: string) {
-    const locale = detectLocale(); // Auto-detect locale
+    const locale = useDetectedLocale(); // Use the custom hook
     const translations = getTranslations(locale);
 
     return (key: string) => {

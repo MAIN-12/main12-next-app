@@ -59,3 +59,9 @@ export const siteConfig = {
     sponsor: "/",
   },
 };
+
+export const allowedOrigins = [
+  "https://app.nubi.com.co",
+  "https://another-allowed-origin.com",
+  // Add more origins as needed
+];

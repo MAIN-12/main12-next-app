@@ -1,3 +1,28 @@
+import { NextResponse } from "next/server"
+import { allowedOrigins } from "@/config/site"
+
+/**
+ * Handle OPTIONS requests for CORS preflight
+ */
+export async function OPTIONS(request: Request) {
+  const origin = request.headers.get("origin") || ""
+
+  // Check if the origin is allowed
+  if (allowedOrigins.includes(origin)) {
+    return new NextResponse(null, {
+      status: 204,
+      headers: {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Methods": "POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization",
+        "Access-Control-Max-Age": "86400", // 24 hours
+      },
+    })
+  }
+
+  return new NextResponse(null, { status: 204 })
+}
+
 /**
  * @swagger
  * /api/support/report-bug:
@@ -68,36 +93,27 @@
  *         description: Server error
  */
 
-import { NextResponse } from "next/server"
-
 export async function POST(request: Request) {
-  const allowedOrigins = [
-    "https://app.nubi.com.co",
-    "https://another-allowed-origin.com"
-  ];
+  const origin = request.headers.get("origin") || ""
 
-  const origin = request.headers.get("origin") || "";
+  // Create response headers based on origin validation
+  const corsHeaders = getCorsHeaders(origin)
 
-  if (!allowedOrigins.includes(origin)) {
+  // If origin is not allowed, return 403 Forbidden
+  if (!corsHeaders) {
     return new NextResponse(null, {
       status: 403,
       statusText: "Forbidden",
       headers: {
         "Content-Type": "text/plain",
       },
-    });
+    })
   }
-
-  const headers = {
-    "Access-Control-Allow-Origin": origin,
-    "Access-Control-Allow-Methods": "POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  };
 
   const apiKey = process.env.MONDAY_API_KEY
   if (!apiKey) {
     console.error("API key is missing")
-    return NextResponse.json({ error: "API key is missing" }, { status: 500 })
+    return NextResponse.json({ error: "API key is missing" }, { status: 500, headers: corsHeaders })
   }
 
   try {
@@ -110,7 +126,7 @@ export async function POST(request: Request) {
     const files = formData.getAll("files") as File[]
 
     if (!title || !description || !location) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400, headers: corsHeaders })
     }
 
     let user = null
@@ -163,7 +179,10 @@ export async function POST(request: Request) {
 
     if (createResult.errors) {
       console.error(JSON.stringify(createResult, null, 2))
-      return NextResponse.json({ error: "Error creating bug report in Monday.com" }, { status: 500 })
+      return NextResponse.json(
+        { error: "Error creating bug report in Monday.com" },
+        { status: 500, headers: corsHeaders },
+      )
     }
 
     const itemId = createResult.data.create_item.id
@@ -206,10 +225,29 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.json({ success: true, id: itemId, fileUploads: fileUploadResults }, { status: 200, headers })
+    return NextResponse.json(
+      { success: true, id: itemId, fileUploads: fileUploadResults },
+      { status: 200, headers: corsHeaders },
+    )
   } catch (error) {
     console.error("Failed to submit bug report:", error)
-    return NextResponse.json({ error: "Failed to submit bug report" }, { status: 500, headers })
+    return NextResponse.json({ error: "Failed to submit bug report" }, { status: 500, headers: corsHeaders })
   }
+}
+
+/**
+ * Helper function to get CORS headers based on origin
+ */
+function getCorsHeaders(origin: string): Record<string, string> | null {
+  // Check if the origin is allowed
+  if (allowedOrigins.includes(origin)) {
+    return {
+      "Access-Control-Allow-Origin": origin,
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+    }
+  }
+
+  return null
 }
 

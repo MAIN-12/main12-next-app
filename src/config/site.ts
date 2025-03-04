@@ -64,6 +64,7 @@ export const allowedOrigins = [
   "https://main12.com",
   "https://app.main12.com",
   "https://app.nubi.com.co",
+  "https://app.enntra.com/",
   "https://another-allowed-origin.com",
   // Add more origins as needed
 ];

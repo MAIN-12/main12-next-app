@@ -21,9 +21,7 @@ const ReportBug: React.FC = () => {
   const t = useTranslations("ReportBug")
   const app_name = process.env.NEXT_PUBLIC_APP_NAME || globalThis.location?.origin || "Not defined";
 
-  useEffect(() => {
-    setLocation(window.location.href)
-  }, [])
+  useEffect(() => { setLocation(window.location.href) }, [])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {

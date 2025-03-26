@@ -31,6 +31,8 @@
   "@react-aria/ssr": "3.9.7",
   "@react-aria/visually-hidden": "3.8.18",
   "@supabase/supabase-js": "^2.48.1",
+  "@vercel/blob": "^0.27.3",
+  "@vercel/postgres": "^0.10.0",
   "clsx": "2.1.1",
   "framer-motion": "11.13.1",
   "glob": "^11.0.1",
@@ -44,7 +46,7 @@
   "react": "18.3.1",
   "react-dom": "18.3.1",
   "rimraf": "^6.0.1",
-  "swagger-ui-react": "^5.18.3",
+  "swagger-ui-react": "^5.20.1",
   "web-push": "^3.6.7"
  },
  "devDependencies": {

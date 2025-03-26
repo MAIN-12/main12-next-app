@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server"
-import { allowedOrigins } from "@/config/site"
 
 /**
  * Handle OPTIONS requests for CORS preflight
@@ -7,20 +6,16 @@ import { allowedOrigins } from "@/config/site"
 export async function OPTIONS(request: Request) {
   const origin = request.headers.get("origin") || ""
 
-  // Check if the origin is allowed
-  if (allowedOrigins.includes(origin)) {
-    return new NextResponse(null, {
-      status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": origin,
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        "Access-Control-Max-Age": "86400", // 24 hours
-      },
-    })
-  }
-
-  return new NextResponse(null, { status: 204 })
+  // Allow all origins
+  return new NextResponse(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "POST, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type, Authorization",
+      "Access-Control-Max-Age": "86400", // 24 hours
+    },
+  })
 }
 
 /**
@@ -96,19 +91,11 @@ export async function OPTIONS(request: Request) {
 export async function POST(request: Request) {
   const origin = request.headers.get("origin") || ""
 
+  console.log("bug report init")
   // Create response headers based on origin validation
   const corsHeaders = getCorsHeaders(origin)
 
-  // If origin is not allowed, return 403 Forbidden
-  if (!corsHeaders) {
-    return new NextResponse(null, {
-      status: 403,
-      statusText: "Forbidden",
-      headers: {
-        "Content-Type": "text/plain",
-      },
-    })
-  }
+  // Always use CORS headers since we're allowing all origins
 
   const apiKey = process.env.MONDAY_API_KEY
   if (!apiKey) {
@@ -124,6 +111,11 @@ export async function POST(request: Request) {
     const location = formData.get("location") as string
     const userJson = formData.get("user") as string
     const files = formData.getAll("files") as File[]
+
+    console.log("app_name", app_name)
+    console.log("title", title)
+    console.log("description", description)
+    console.log("location", location)
 
     if (!title || !description || !location) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400, headers: corsHeaders })
@@ -238,16 +230,12 @@ export async function POST(request: Request) {
 /**
  * Helper function to get CORS headers based on origin
  */
-function getCorsHeaders(origin: string): Record<string, string> | null {
-  // Check if the origin is allowed
-  if (allowedOrigins.includes(origin)) {
-    return {
-      "Access-Control-Allow-Origin": origin,
-      "Access-Control-Allow-Methods": "POST, OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type, Authorization",
-    }
+function getCorsHeaders(origin: string): Record<string, string> {
+  // Allow all origins
+  return {
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
   }
-
-  return null
 }
 

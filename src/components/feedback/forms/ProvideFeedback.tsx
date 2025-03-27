@@ -1,75 +1,122 @@
 "use client"
 
-import React, { useState, useEffect } from "react"
-import { Button, Input, Textarea, Spacer, RadioGroup, Radio } from "@heroui/react"
+import type React from "react"
+import { useState } from "react"
+import { Button, Input, Textarea, Spacer } from "@heroui/react"
 import { motion } from "framer-motion"
 
-import { useUser } from "../auth/useUser";
-import { useTranslations } from "../locales/getTranslations";
+import { useUser } from "../auth/useUser"
+import { useTranslations } from "../locales/getTranslations"
 import { Disclaimer } from "../Disclaimer"
+import SuccessView from "./success-view"
+import FileInput from "./file-input"
+import StarRating from "./star-rating"
+
+const API_URL = "/api/support"
+
+// Helper function to convert File to base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = (error) => reject(error)
+  })
+}
 
 const ProvideFeedback: React.FC = () => {
   const { user } = useUser()
+  const { t, locale } = useTranslations("ProvideFeedback") // Get both translation function and locale
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
-  const [isCurrentPage, setIsCurrentPage] = useState("yes")
-  const [location, setLocation] = useState("")
+  const [rating, setRating] = useState(0)
   const [files, setFiles] = useState<File[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [successMessage, setSuccessMessage] = useState("")
+  const [isSuccess, setIsSuccess] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
-  const t = useTranslations("ProvideFeedback")
-  const type = "Feedback"
-  const app_name = process.env.NEXT_PUBLIC_APP_NAME || globalThis.location?.origin || "Not defined";
+  const [ticketNumber, setTicketNumber] = useState("")
+  const app_name = process.env.NEXT_PUBLIC_APP_NAME || globalThis.location?.origin || "Not defined"
 
-  useEffect(() => {
-    setLocation(window.location.href)
-  }, [])
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const newFiles = Array.from(e.target.files)
-      const validFiles = newFiles.filter((file) => file.size <= 20 * 1024 * 1024) // 20MB limit
-      setFiles((prevFiles) => [...prevFiles, ...validFiles])
-      if (newFiles.length !== validFiles.length) {
-        setErrorMessage("Some files exceeded the 20MB size limit and were not added.")
-      }
-    }
+  const handleFileChange = (newFiles: File[]) => {
+    setFiles(newFiles)
   }
 
+  const handleRatingChange = (newRating: number) => {
+    setRating(newRating)
+  }
+
+  // Update the handleSubmit function to include client timestamp
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
     setErrorMessage("")
 
-    const formData = new FormData()
-    formData.append("app_name", app_name)
-    formData.append("title", title)
-    formData.append("description", description)
-    formData.append("location", location)
-    formData.append("type", type)
-    if (user) {
-      formData.append("user", JSON.stringify(user))
-    }
-    files.forEach((file) => formData.append("files", file))
+    // Record the timestamp when the form is submitted
+    const clientTimestamp = Date.now()
 
     try {
-      const response = await fetch("/api/support/feedback", {
+      // Convert all files to base64
+      const filePromises = files.map(async (file) => {
+        const base64 = await fileToBase64(file)
+        return {
+          name: file.name,
+          type: file.type,
+          data: base64,
+        }
+      })
+
+      const fileData = await Promise.all(filePromises)
+
+      // Create request body as JSON
+      const requestBody = {
+        app_name,
+        type: "feedback", // Different type for feedback
+        title,
+        description,
+        rating, // Include the rating in the submission
+        location: window.location.href, // Current page as reference
+        user,
+        files: fileData,
+        client_timestamp: clientTimestamp, // Add client timestamp
+        // Add form language information
+        form_language: {
+          locale: locale, // The locale used for the form
+          browser_language: navigator.language, // The browser's language
+          is_match: locale === navigator.language.split("-")[0], // Whether they match
+        },
+        // Add system info
+        system_info: {
+          userAgent: navigator.userAgent,
+          language: navigator.language,
+          platform: navigator.platform,
+          screenSize: `${window.screen.width}x${window.screen.height}`,
+          viewport: `${window.innerWidth}x${window.innerHeight}`,
+          timestamp: new Date().toISOString(),
+        },
+      }
+
+      const response = await fetch(API_URL, {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestBody),
       })
 
       const result = await response.json()
 
       if (response.ok) {
-        setSuccessMessage("Feedback submitted successfully.")
-        if (result.fileUploads) {
-          const failedUploads = result.fileUploads.filter((upload: any) => !upload.success)
+        // Use the ID from the API response as the ticket number
+        setTicketNumber(result.id)
+        setIsSuccess(true)
+
+        // Check if any files failed to upload
+        if (result.data?.files) {
+          const failedUploads = result.data.files.filter((upload: any) => upload.error)
           if (failedUploads.length > 0) {
             setErrorMessage(`Some files failed to upload: ${failedUploads.map((u: any) => u.name).join(", ")}`)
           }
         }
-        resetForm()
       } else {
         throw new Error(result.error || "Failed to submit feedback")
       }
@@ -87,12 +134,26 @@ const ProvideFeedback: React.FC = () => {
   const resetForm = () => {
     setTitle("")
     setDescription("")
-    setLocation(window.location.href)
-    setIsCurrentPage("yes")
+    setRating(0)
     setFiles([])
-    // Reset file input by clearing its value
-    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement
-    if (fileInput) fileInput.value = ""
+    setIsSuccess(false)
+    setErrorMessage("")
+    setTicketNumber("")
+  }
+
+  if (isSuccess) {
+    return (
+      <SuccessView
+        title={t("successTitle") || "Feedback Received!"}
+        message={
+          t("successMessage") ||
+          "Thank you for your feedback! We appreciate your input and will use it to improve our services."
+        }
+        buttonText={t("submitAnother") || "Submit More Feedback"}
+        onReset={resetForm}
+        type="suggestion"
+      />
+    )
   }
 
   return (
@@ -102,57 +163,64 @@ const ProvideFeedback: React.FC = () => {
       animate={{ height: "auto" }}
       transition={{ duration: 0.5, ease: "easeInOut" }}
     >
-      <h1 className="text-2xl font-bold">{t("title")}</h1>
-      <p className="mb-3">{t("description")}</p>
+      <h1 className="text-2xl font-bold">{t("title") || "Provide Feedback"}</h1>
+      <p className="mb-3">
+        {t("description") || "We value your feedback. Please fill out the form below to help us improve."}
+      </p>
       <form onSubmit={handleSubmit}>
-        <Input label={t("feedbackTitle")} value={title} onChange={(e) => setTitle(e.target.value)} required fullWidth />
+        <Input
+          label={t("feedbackTitle") || "Feedback Title"}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          fullWidth
+        />
         <Spacer y={3} />
+
+        {/* Star Rating Component */}
+        <div className="mb-4">
+          <StarRating
+            value={rating}
+            onChange={handleRatingChange}
+            label={t("ratingLabel") || "How would you rate your experience?"}
+            required
+          />
+        </div>
+        <Spacer y={3} />
+
         <Textarea
-          label={t("descriptionLabel")}
+          label={t("descriptionLabel") || "Description"}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           required
           fullWidth
         />
         <Spacer y={3} />
-        <RadioGroup
-          label={t("currentPageQuestion")}
-          value={isCurrentPage}
-          onValueChange={setIsCurrentPage}
-          orientation="horizontal"
+        <FileInput
+          label={t("attachFiles") || "Add files (up to 20MB each)"}
+          onChange={handleFileChange}
+          multiple
+          maxSize={20}
+          accept="image/*,.pdf,.doc,.docx,.txt"
+        />
+        <Spacer y={3} />
+        <Button
+          type="submit"
+          isLoading={isSubmitting}
+          fullWidth
+          color="primary"
+          className="text-primary-foreground"
+          disabled={isSubmitting}
         >
-          <Radio value="yes">{t("yes")}</Radio>
-          <Radio value="no">{t("no")}</Radio>
-        </RadioGroup>
-        <Spacer y={3} />
-        {isCurrentPage === "no" && (
-          <Input
-            label={t("feedbackLocation")}
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            required
-            fullWidth
-          />
-        )}
-        <Spacer y={3} />
-        <Input type="file" label={t("attachFiles")} onChange={handleFileChange} multiple fullWidth />
-        {files.length > 0 && (
-          <ul className="text-sm text-gray-600 mt-1">
-            {files.map((file, index) => (
-              <li key={index}>
-                {file.name} ({(file.size / 1024).toFixed(2)} KB)
-              </li>
-            ))}
-          </ul>
-        )}
-        <Spacer y={3} />
-        <Button type="submit" isLoading={isSubmitting} fullWidth color="primary" className="text-primary-foreground">
-          {isSubmitting ? t("submitting") : t("submitButton")}
+          {isSubmitting ? t("submitting") || "Submitting..." : t("submitButton") || "Submit Feedback"}
         </Button>
         <Disclaimer />
       </form>
-      {successMessage && <p className="text-green-600 mt-4">{t("successMessage")}</p>}
-      {errorMessage && <p className="text-red-600 mt-4">{errorMessage}</p>}
+      {errorMessage && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mt-4">
+          <p>{errorMessage}</p>
+        </div>
+      )}
     </motion.div>
   )
 }

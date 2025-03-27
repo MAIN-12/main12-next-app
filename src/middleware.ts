@@ -22,6 +22,6 @@ export const config = {
         '/admin/:path*',
         '/home/:path*',
         '/api/chat/:path*',
-        '/api-doc/:path*',
+        // '/api-doc/:path*',
     ],
 };

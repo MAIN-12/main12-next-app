@@ -2,6 +2,11 @@ import { NextResponse } from "next/server"
 import { executeQuery } from "@/lib/db"
 import { put } from "@vercel/blob"
 
+// Define feedbackConfig or import it if it exists in another module
+const feedbackConfig = {
+  collectSystemInfo: true, // Example value, adjust as needed
+}
+
 /**
  * Handle OPTIONS requests for CORS preflight
  */
@@ -15,6 +20,14 @@ export async function OPTIONS() {
       "Access-Control-Max-Age": "86400", // 24 hours
     },
   })
+}
+
+// Helper function to generate a ticket number
+const generateTicketNumber = (type: string): string => {
+  const prefix = type === "bug" ? "BUG-" : type === "suggestion" ? "SUG-" : "SUP-"
+  const timestamp = Date.now().toString(36).toUpperCase()
+  const randomChars = Math.random().toString(36).substring(2, 6).toUpperCase()
+  return `${prefix}${timestamp.slice(-4)}${randomChars}`
 }
 
 /**
@@ -101,8 +114,8 @@ export async function OPTIONS() {
  *                   type: boolean
  *                   example: true
  *                 id:
- *                   type: integer
- *                   example: 1
+ *                   type: string
+ *                   example: "SUP-ABC1XYZ2"
  *                 created_at:
  *                   type: string
  *                   format: date-time
@@ -131,7 +144,6 @@ export async function OPTIONS() {
  *                   type: string
  *                   example: "Failed to submit feedback"
  */
-// Update the POST function to accept JSON instead of FormData
 export async function POST(request: Request) {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -140,23 +152,47 @@ export async function POST(request: Request) {
   }
 
   try {
+    console.log("Support API POST request received")
     // Parse JSON request body
     const body = await request.json()
+    console.log("Original request body:", JSON.stringify(body, null, 2))
 
+    // Extract fields needed for the database table structure
     const app_name = body.app_name
     const type = body.type || "bug"
-    const status = body.status || "pending"
-    const title = body.title
-    const description = body.description
-    const location = body.location
-    const user = body.user
-    const files = body.files || []
+    const title = body.title || "Untitled Request"
+    let status = body.status || "pending"
 
-    if (!app_name || !title || !description) {
+    // Extract client timestamp for processing time calculation
+    const clientTimestamp = body.client_timestamp || Date.now()
+    const processingStartTime = Date.now()
+
+    // Validate that the status is a valid enum value
+    const validStatusQuery = `
+      SELECT EXISTS (
+        SELECT 1 FROM pg_enum 
+        WHERE enumtypid = 'feedback_status'::regtype 
+        AND enumlabel = $1
+      );
+    `
+
+    const statusValidResult = await executeQuery(validStatusQuery, [status])
+    if (!statusValidResult.rows[0].exists) {
+      // Default to pending if invalid status
+      status = "pending"
+      console.warn(`Invalid status value: ${body.status}, defaulting to 'pending'`)
+    }
+
+    // Basic validation
+    if (!app_name || !title || !body.description) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400, headers: corsHeaders })
     }
 
-    // Upload files to Vercel Blob if any
+    // Use provided ticket number or generate a new one
+    const ticketId = body.ticketNumber || generateTicketNumber(type)
+
+    // Handle file uploads if any
+    const files = body.files || []
     const fileUploads = []
     if (files.length > 0) {
       for (const file of files) {
@@ -195,42 +231,101 @@ export async function POST(request: Request) {
       }
     }
 
-    // Prepare data for database
-    const data = {
-      title,
-      description,
-      location,
-      user,
-      files: fileUploads,
-      metadata: {
-        userAgent: request.headers.get("user-agent"),
-        timestamp: new Date().toISOString(),
-      },
+    // Create a deep copy of the original request body to preserve ALL fields
+    const dataObject = JSON.parse(JSON.stringify(body))
+
+    // Update the files array with the uploaded file information
+    dataObject.files = fileUploads
+
+    // IMPORTANT: Make sure we're not losing console_logs and system_info
+    // These should already be in dataObject since we did a deep copy of body
+    // But let's log to verify they're present
+    console.log("Console logs present:", !!dataObject.console_logs)
+    console.log("System info present:", !!dataObject.system_info)
+
+    // Calculate processing time
+    const processingEndTime = Date.now()
+    const processingTime = processingEndTime - processingStartTime
+    const totalProcessingTime = processingEndTime - clientTimestamp
+
+    // Add timing metadata
+    dataObject.timing = {
+      client_timestamp: clientTimestamp,
+      server_start_timestamp: processingStartTime,
+      server_end_timestamp: processingEndTime,
+      server_processing_time_ms: processingTime,
+      total_processing_time_ms: totalProcessingTime,
     }
 
-    // Insert into database with the new columns
+    // Add metadata
+    dataObject.metadata = {
+      ...(dataObject.metadata || {}),
+      userAgent: request.headers.get("user-agent"),
+      timestamp: new Date().toISOString(),
+    }
+
+    // Log the entire data object structure (but not the full content) to debug
+    console.log("Data object structure:", Object.keys(dataObject))
+    if (dataObject.console_logs) {
+      console.log(
+        "Console logs structure:",
+        typeof dataObject.console_logs,
+        typeof dataObject.console_logs === "object" ? Object.keys(dataObject.console_logs) : "not an object",
+      )
+    }
+    if (dataObject.system_info) {
+      console.log(
+        "System info structure:",
+        typeof dataObject.system_info,
+        typeof dataObject.system_info === "object" ? Object.keys(dataObject.system_info) : "not an object",
+      )
+    }
+
+    console.log("Final data object to be stored:", JSON.stringify(dataObject, null, 2))
+
+    // Insert into database with title as a separate column
     const insertQuery = `
-      INSERT INTO feedback (app, type, status, data)
-      VALUES ($1, $2, $3, $4)
+      INSERT INTO feedback (id, app, type, title, status, data)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING id, created_at;
     `
 
-    const result = await executeQuery(insertQuery, [app_name, type, status, JSON.stringify(data)])
+    const result = await executeQuery(insertQuery, [
+      ticketId,
+      app_name,
+      type,
+      title,
+      status,
+      JSON.stringify(dataObject),
+    ])
     const feedbackId = result.rows[0].id
     const createdAt = result.rows[0].created_at
+
+    console.log("Database insert successful, ID:", feedbackId)
 
     return NextResponse.json(
       {
         success: true,
         id: feedbackId,
+        title: title,
         created_at: createdAt,
         message: "Feedback submitted successfully",
+        processing_time_ms: processingTime,
+        total_processing_time_ms: totalProcessingTime,
       },
       { status: 200, headers: corsHeaders },
     )
   } catch (error) {
     console.error("Failed to submit feedback:", error)
-    return NextResponse.json({ error: "Failed to submit feedback" }, { status: 500, headers: corsHeaders })
+    // Return more detailed error information for debugging
+    return NextResponse.json(
+      {
+        error: "Failed to submit feedback",
+        details: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      },
+      { status: 500, headers: corsHeaders },
+    )
   }
 }
 
@@ -259,6 +354,11 @@ export async function POST(request: Request) {
  *           type: string
  *         description: Filter by status (pending, in-progress, resolved, etc.)
  *       - in: query
+ *         name: title
+ *         schema:
+ *           type: string
+ *         description: Search by title (partial match)
+ *       - in: query
  *         name: limit
  *         schema:
  *           type: integer
@@ -285,10 +385,12 @@ export async function POST(request: Request) {
  *                     type: object
  *                     properties:
  *                       id:
- *                         type: integer
+ *                         type: string
  *                       app:
  *                         type: string
  *                       type:
+ *                         type: string
+ *                       title:
  *                         type: string
  *                       status:
  *                         type: string
@@ -336,11 +438,12 @@ export async function GET(request: Request) {
     const app = searchParams.get("app")
     const type = searchParams.get("type")
     const status = searchParams.get("status")
+    const titleSearch = searchParams.get("title")
     const limit = Number.parseInt(searchParams.get("limit") || "50")
     const offset = Number.parseInt(searchParams.get("offset") || "0")
 
     let query = `
-      SELECT id, app, type, status, data, notes, created_at, modified_at
+      SELECT id, app, type, title, status, data, notes, created_at, modified_at
       FROM feedback
     `
 
@@ -363,6 +466,12 @@ export async function GET(request: Request) {
     if (status) {
       conditions.push(`status = $${paramIndex}`)
       values.push(status)
+      paramIndex++
+    }
+
+    if (titleSearch) {
+      conditions.push(`title ILIKE $${paramIndex}`)
+      values.push(`%${titleSearch}%`) // ILIKE for case-insensitive search with wildcards
       paramIndex++
     }
 
@@ -390,7 +499,13 @@ export async function GET(request: Request) {
     )
   } catch (error) {
     console.error("Failed to retrieve feedback:", error)
-    return NextResponse.json({ error: "Failed to retrieve feedback" }, { status: 500, headers: corsHeaders })
+    return NextResponse.json(
+      {
+        error: "Failed to retrieve feedback",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500, headers: corsHeaders },
+    )
   }
 }
 

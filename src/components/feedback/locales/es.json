@@ -31,8 +31,12 @@
         "screenshotLabel": "Captura de Pantalla (opcional)",
         "submitButton": "Enviar Informe de Error",
         "submitting": "Enviando...",
-        "successMessage": "Informe de error enviado con éxito.",
-        "attachFiles": "Agregar archivos (hasta 20MB cada uno)"
+        "successTitle": "¡Informe de Error Enviado!",
+        "successMessage": "Gracias por ayudarnos a mejorar nuestro producto. Nuestro equipo revisará su informe y tomará las medidas apropiadas.",
+        "reportAnother": "Informar Otro Error",
+        "attachFiles": "Agregar archivos (hasta 20MB cada uno)",
+        "includeConsoleLogs": "Incluir registros de la consola del navegador (recomendado)",
+        "consoleLogsHelp": "Esto ayuda a nuestros desarrolladores a diagnosticar el problema de manera más efectiva."
     },
     "RequestFeature": {
         "title": "Solicitar una Funcionalidad",
@@ -49,7 +53,9 @@
         "locationPlaceholder": "",
         "submitting": "Enviando...",
         "submitButton": "Enviar Solicitud",
-        "successMessage": "Solicitud enviada con éxito.",
+        "successTitle": "¡Solicitud de Funcionalidad Recibida!",
+        "successMessage": "Gracias por tu solicitud de funcionalidad. Apreciamos tu aporte y lo consideraremos para futuros desarrollos.",
+        "submitAnother": "Enviar Otra Solicitud",
         "attachFiles": "Agregar archivos (hasta 20MB cada uno)"
     },
     "RequestSupport": {
@@ -67,7 +73,9 @@
         "locationPlaceholder": "",
         "submitting": "Enviando...",
         "submitButton": "Enviar Solicitud de Ayuda",
-        "successMessage": "Solicitud de ayuda enviada con éxito.",
+        "successTitle": "¡Solicitud de Soporte Enviada!",
+        "successMessage": "Gracias por contactarnos. Nuestro equipo de soporte revisará tu solicitud y te responderá lo antes posible.",
+        "submitAnother": "Enviar Otra Solicitud",
         "attachFiles": "Agregar archivos (hasta 20MB cada uno)"
     },
     "ProvideFeedback": {
@@ -85,7 +93,46 @@
         "screenshotLabel": "Captura de Pantalla (opcional)",
         "submitting": "Enviando...",
         "submitButton": "Enviar Comentarios",
-        "successMessage": "¡Gracias por tus comentarios!",
+        "successTitle": "¡Comentarios Recibidos!",
+        "successMessage": "¡Gracias por tus comentarios! Apreciamos tu aporte y lo utilizaremos para mejorar nuestros servicios.",
+        "submitAnother": "Enviar Más Comentarios",
         "attachFiles": "Agregar archivos (hasta 20MB cada uno)"
+    },
+    "Suggestion": {
+        "title": "Enviar una Sugerencia",
+        "description": "¿Tienes una idea para mejorar nuestro producto? ¡Háznoslo saber!",
+        "suggestionTitle": "Título",
+        "descriptionLabel": "Descripción",
+        "submitting": "Enviando...",
+        "submitButton": "Enviar Sugerencia",
+        "successTitle": "¡Sugerencia Recibida!",
+        "successMessage": "¡Gracias por tu sugerencia! Apreciamos tu aporte y lo consideraremos para futuras mejoras.",
+        "submitAnother": "Enviar Otra Sugerencia",
+        "attachFiles": "Adjuntar Archivos (Opcional)"
+    },
+    "Support": {
+        "title": "Obtener Soporte",
+        "description": "¿Necesitas ayuda? Envía una solicitud de soporte y te responderemos lo antes posible.",
+        "supportTitle": "Asunto",
+        "category": "Categoría",
+        "descriptionLabel": "¿Cómo podemos ayudarte?",
+        "submitting": "Enviando...",
+        "submitButton": "Enviar Solicitud",
+        "successTitle": "¡Solicitud de Soporte Enviada!",
+        "successMessage": "Gracias por contactarnos. Nuestro equipo de soporte revisará tu solicitud y te responderá lo antes posible.",
+        "submitAnother": "Enviar Otra Solicitud",
+        "attachFiles": "Adjuntar Capturas de Pantalla o Archivos (Opcional)",
+        "ticketNumber": "Número de Ticket",
+        "saveTicketReference": "Por favor guarda este número para tu referencia",
+        "categories": {
+            "account": "Por favor guarda este número para tu referencia",
+            "categories": {
+                "account": "Problemas de Cuenta",
+                "billing": "Preguntas de Facturación",
+                "technical": "Soporte Técnico",
+                "feature": "Preguntas sobre Funcionalidades",
+                "other": "Otro"
+            }
+        }
     }
 }

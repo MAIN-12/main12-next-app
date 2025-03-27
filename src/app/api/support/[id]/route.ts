@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { type NextRequest, NextResponse } from "next/server"
 import { executeQuery } from "@/lib/db"
 
 /**
@@ -39,7 +39,7 @@ export async function OPTIONS() {
  *       500:
  *         description: Server error
  */
-export async function GET(request: Request, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, PATCH, DELETE, OPTIONS",
@@ -47,7 +47,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
   }
 
   try {
-    const id = params.id
+    const { id } = await context.params
 
     const query = `
       SELECT id, app, type, title, status, data, notes, created_at, modified_at
@@ -117,7 +117,7 @@ export async function GET(request: Request, { params }: { params: { id: string }
  *       500:
  *         description: Server error
  */
-export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+export async function PATCH(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, PATCH, DELETE, OPTIONS",
@@ -125,7 +125,8 @@ export async function PATCH(request: Request, { params }: { params: { id: string
   }
 
   try {
-    const id = params.id
+    const { id } = await context.params
+
     const { type, title, status, data, notes } = await request.json()
 
     // Check if feedback exists
@@ -173,7 +174,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
       values.push(type)
       paramIndex++
     }
-    
+
     if (title) {
       updateQuery += `, title = $${paramIndex}`
       values.push(title)
@@ -243,7 +244,7 @@ export async function PATCH(request: Request, { params }: { params: { id: string
  *       500:
  *         description: Server error
  */
-export async function DELETE(request: Request, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, context: { params: Promise<{ id: string }> }) {
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, PATCH, DELETE, OPTIONS",
@@ -251,7 +252,7 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   }
 
   try {
-    const id = params.id
+    const { id } = await context.params
 
     // Check if feedback exists
     const checkQuery = `SELECT id FROM feedback WHERE id = $1`

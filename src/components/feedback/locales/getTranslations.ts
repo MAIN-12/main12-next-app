@@ -61,21 +61,21 @@ export function getTranslations(locale: string) {
     return translationsMap[locale] || translationsMap[feedbackConfig.defaultLanguage] || translationsMap["en"]
 }
 
-// Replace the entire useTranslations function implementation with this:
-
 // Define a type for our enhanced translation function
 type TranslationFunction = {
     (key: string, params?: Record<string, string | number>): string
-    locale: string
     t: (key: string, params?: Record<string, string | number>) => string
+    locale: string
 }
 
-// Implementation that supports all patterns
-export function useTranslations(component: string): TranslationFunction {
+// Define function overloads for TypeScript to understand all usage patterns
+export function useTranslations(component: string): TranslationFunction
+
+// Implementation that handles all patterns
+export function useTranslations(component: string) {
     const locale = useDetectedLocale() // Use the custom hook
     const translations = getTranslations(locale)
 
-    // Create the translation function
     const translateFn = ((key: string, params?: Record<string, string | number>) => {
         const keys = key.split(".") // Split the key by dot notation
         let value = translations[component]
@@ -95,7 +95,7 @@ export function useTranslations(component: string): TranslationFunction {
         }
 
         return typeof value === "string" ? value : key // Ensure it returns a string or fallback
-    }) as TranslationFunction
+    }) as TranslationFunction // Cast to our defined type
 
     // Add properties to the function
     translateFn.locale = locale
@@ -104,11 +104,38 @@ export function useTranslations(component: string): TranslationFunction {
     return translateFn
 }
 
-// Export default for backward compatibility
-export default useTranslations
-
-// Export the current language for components that need it
-export function getCurrentLanguage(): string {
+// Fix: Rename to useCurrentLanguage to follow React Hook naming conventions
+export function useCurrentLanguage(): string {
     return useDetectedLocale()
 }
+
+// Non-hook version for use in non-component/non-hook contexts
+export function getCurrentLanguage(): string {
+    // This is a non-hook implementation that doesn't use React state
+    if (typeof window === "undefined") {
+        return feedbackConfig.defaultLanguage
+    }
+
+    // Try to get from localStorage first
+    const storedLocale = localStorage.getItem("feedbackLanguage")
+    if (storedLocale && translationsMap[storedLocale]) {
+        return storedLocale
+    }
+
+    // Try to get from browser language
+    try {
+        const browserLang = navigator.language.split("-")[0]
+        if (browserLang && translationsMap[browserLang]) {
+            return browserLang
+        }
+    } catch (e) {
+        // Ignore errors
+    }
+
+    // Fallback to default
+    return feedbackConfig.defaultLanguage
+}
+
+// Default export for backward compatibility
+export default useTranslations
 

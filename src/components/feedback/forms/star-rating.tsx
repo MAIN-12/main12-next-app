@@ -27,7 +27,7 @@ const StarRating: React.FC<StarRatingProps> = ({
     return (
         <div className="w-full">
             <div className="flex flex-col">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                     {label} {required && <span className="text-red-500">*</span>}
                 </label>
                 <div className="flex items-center">

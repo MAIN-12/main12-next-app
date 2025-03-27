@@ -166,6 +166,7 @@ const RequestFeature: React.FC = () => {
             <h1 className="text-2xl font-bold">{t("title") || "Request a Feature"}</h1>
             <p className="mb-3">{t("description") || "Please fill out the form below to request a new feature."}</p>
             <form onSubmit={handleSubmit}>
+                <Spacer y={8} />
                 <Input
                     label={t("featureTitle") || "Feature Title"}
                     value={title}
@@ -182,7 +183,7 @@ const RequestFeature: React.FC = () => {
                     required
                     fullWidth
                 />
-                <Spacer y={3} />
+                <Spacer y={8} />
                 <RadioGroup
                     label={t("currentPageQuestion") || "Is the feature request related to the current page?"}
                     value={isCurrentPage}
@@ -203,7 +204,7 @@ const RequestFeature: React.FC = () => {
                         fullWidth
                     />
                 )}
-                <Spacer y={3} />
+                <Spacer y={8} />
                 <FileInput
                     label={t("attachFiles") || "Add files (up to 20MB each)"}
                     onChange={handleFileChange}
@@ -211,7 +212,7 @@ const RequestFeature: React.FC = () => {
                     maxSize={20}
                     accept="image/*,.pdf,.doc,.docx,.txt"
                 />
-                <Spacer y={3} />
+                <Spacer y={8} />
                 <Button
                     type="submit"
                     isLoading={isSubmitting}

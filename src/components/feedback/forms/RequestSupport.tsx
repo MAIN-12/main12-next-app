@@ -172,14 +172,7 @@ const RequestSupport: React.FC = () => {
         {t("description") || "Need help? Submit a support request and we'll get back to you as soon as possible."}
       </p>
       <form onSubmit={handleSubmit}>
-        <Input
-          label={t("supportTitle") || "Subject"}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-          fullWidth
-        />
-        <Spacer y={3} />
+        <Spacer y={8} />
         <Select
           label={t("category") || "Category"}
           value={category}
@@ -193,6 +186,16 @@ const RequestSupport: React.FC = () => {
           ))}
         </Select>
         <Spacer y={3} />
+
+        <Input
+          label={t("supportTitle") || "Subject"}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          fullWidth
+        />
+        <Spacer y={3} />
+
         <Textarea
           label={t("descriptionLabel") || "How can we help you?"}
           value={description}
@@ -200,7 +203,7 @@ const RequestSupport: React.FC = () => {
           required
           fullWidth
         />
-        <Spacer y={3} />
+        <Spacer y={8} />
         <FileInput
           label={t("attachFiles") || "Attach Screenshots or Files (Optional)"}
           onChange={handleFileChange}
@@ -208,7 +211,7 @@ const RequestSupport: React.FC = () => {
           maxSize={20}
           accept="image/*,.pdf,.doc,.docx,.txt"
         />
-        <Spacer y={3} />
+        <Spacer y={8} />
         <Button
           type="submit"
           isLoading={isSubmitting}

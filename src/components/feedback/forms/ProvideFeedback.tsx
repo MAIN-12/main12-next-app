@@ -168,16 +168,8 @@ const ProvideFeedback: React.FC = () => {
         {t("description") || "We value your feedback. Please fill out the form below to help us improve."}
       </p>
       <form onSubmit={handleSubmit}>
-        <Input
-          label={t("feedbackTitle") || "Feedback Title"}
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-          fullWidth
-        />
-        <Spacer y={3} />
-
         {/* Star Rating Component */}
+        <Spacer y={8} />
         <div className="mb-4">
           <StarRating
             value={rating}
@@ -186,8 +178,15 @@ const ProvideFeedback: React.FC = () => {
             required
           />
         </div>
+        <Spacer y={8} />
+        <Input
+          label={t("feedbackTitle") || "Feedback Title"}
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+          fullWidth
+        />
         <Spacer y={3} />
-
         <Textarea
           label={t("descriptionLabel") || "Description"}
           value={description}
@@ -195,7 +194,7 @@ const ProvideFeedback: React.FC = () => {
           required
           fullWidth
         />
-        <Spacer y={3} />
+        <Spacer y={8} />
         <FileInput
           label={t("attachFiles") || "Add files (up to 20MB each)"}
           onChange={handleFileChange}
@@ -203,7 +202,7 @@ const ProvideFeedback: React.FC = () => {
           maxSize={20}
           accept="image/*,.pdf,.doc,.docx,.txt"
         />
-        <Spacer y={3} />
+        <Spacer y={8} />
         <Button
           type="submit"
           isLoading={isSubmitting}

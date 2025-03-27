@@ -96,7 +96,8 @@
         "successTitle": "¡Comentarios Recibidos!",
         "successMessage": "¡Gracias por tus comentarios! Apreciamos tu aporte y lo utilizaremos para mejorar nuestros servicios.",
         "submitAnother": "Enviar Más Comentarios",
-        "attachFiles": "Agregar archivos (hasta 20MB cada uno)"
+        "attachFiles": "Agregar archivos (hasta 20MB cada uno)",
+        "ratingLabel": "¿Cómo calificarías tu experiencia?"
     },
     "Suggestion": {
         "title": "Enviar una Sugerencia",
@@ -125,14 +126,21 @@
         "ticketNumber": "Número de Ticket",
         "saveTicketReference": "Por favor guarda este número para tu referencia",
         "categories": {
-            "account": "Por favor guarda este número para tu referencia",
-            "categories": {
-                "account": "Problemas de Cuenta",
-                "billing": "Preguntas de Facturación",
-                "technical": "Soporte Técnico",
-                "feature": "Preguntas sobre Funcionalidades",
-                "other": "Otro"
-            }
+            "account": "Problemas de Cuenta",
+            "billing": "Preguntas de Facturación",
+            "technical": "Soporte Técnico",
+            "feature": "Preguntas sobre Funcionalidades",
+            "other": "Otro"
         }
+    },
+    "FileInput": {
+        "addFile": "Agregar Archivo",
+        "addFiles": "Agregar Archivos",
+        "addAnotherFile": "Agregar Otro Archivo",
+        "addDifferentFile": "Agregar Archivo Diferente",
+        "clearAll": "Borrar todo",
+        "fileSelected": "archivo seleccionado",
+        "filesSelected": "archivos seleccionados",
+        "sizeExceeded": "El archivo \"{fileName}\" excede el límite de tamaño de {maxSize}MB."
     }
 }

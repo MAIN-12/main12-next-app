@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState, useEffect } from "react"
-import { Button, Input, Textarea, Spacer, RadioGroup, Radio, Checkbox } from "@heroui/react"
+import { Button, Input, Textarea, Spacer, RadioGroup, Radio, Checkbox, Tooltip } from "@heroui/react"
 import { motion } from "framer-motion"
 
 import { useUser } from "../auth/useUser"
@@ -13,6 +13,7 @@ import FileInput from "./file-input"
 import feedbackConfig from "../feedback.config"
 import { initConsoleCapture, getConsoleCapture, captureUncaughtErrors } from "../utils/console-capture"
 import { parseUserAgent } from "../utils/user-agent-parser"
+import { HelpCircleIcon } from "lucide-react"
 
 // Helper function to convert File to base64
 const fileToBase64 = (file: File): Promise<string> => {
@@ -205,6 +206,7 @@ const ReportBug: React.FC = () => {
       <h1 className="text-2xl font-bold">{t("title")}</h1>
       <p className="mb-3">{t("description")}</p>
       <form onSubmit={handleSubmit}>
+        <Spacer y={8} />
         <Input label={t("bugTitle")} value={title} onChange={(e) => setTitle(e.target.value)} required fullWidth />
         <Spacer y={3} />
         <Textarea
@@ -214,7 +216,7 @@ const ReportBug: React.FC = () => {
           required
           fullWidth
         />
-        <Spacer y={3} />
+        <Spacer y={8} />
         <RadioGroup
           label={t("currentPageQuestion")}
           value={isCurrentPage}
@@ -234,7 +236,7 @@ const ReportBug: React.FC = () => {
             fullWidth
           />
         )}
-        <Spacer y={3} />
+        <Spacer y={8} />
         <FileInput
           label={t("attachFiles") || "Add files (up to 20MB each)"}
           onChange={handleFileChange}
@@ -242,16 +244,14 @@ const ReportBug: React.FC = () => {
           maxSize={feedbackConfig.maxFileSize}
           accept={feedbackConfig.allowedFileTypes}
         />
-        <Spacer y={3} />
+        <Spacer y={8} />
 
         {/* Console logs option */}
         <div className="mb-4">
-          <Checkbox isSelected={includeConsoleLogs} onValueChange={setIncludeConsoleLogs} color="primary">
-            {t("includeConsoleLogs") || "Include browser console logs (recommended)"}
+          <Checkbox isSelected={includeConsoleLogs} onValueChange={setIncludeConsoleLogs} color="primary" >
+            <span className="text-sm">{t("includeConsoleLogs") || "Include browser console logs (recommended)"}
+            </span>
           </Checkbox>
-          <p className="text-sm text-gray-500 mt-1 ml-6 dark:text-gray-400">
-            {t("consoleLogsHelp") || "This helps our developers diagnose the issue more effectively."}
-          </p>
         </div>
 
         <Spacer y={3} />

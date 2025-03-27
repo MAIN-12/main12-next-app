@@ -26,7 +26,7 @@ const fileToBase64 = (file: File): Promise<string> => {
 
 const ProvideFeedback: React.FC = () => {
   const { user } = useUser()
-  const { t, locale } = useTranslations("ProvideFeedback") // Get both translation function and locale
+  const { t, locale } = useTranslations("ProvideFeedback")
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [rating, setRating] = useState(0)

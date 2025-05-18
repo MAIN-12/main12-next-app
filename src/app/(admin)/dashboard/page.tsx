@@ -9,7 +9,7 @@ export default function Home() {
 
       <QRCodeWithLogoAndDots
         value="https://main12.com/"
-        logoUrl="https://99designs-blog.imgix.net/blog/wp-content/uploads/2022/06/Starbucks_Corporation_Logo_2011.svg-e1657703028844.png?auto=format&q=60&fit=max&w=930"
+        logoUrl="https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Pepsi_2023.svg/1200px-Pepsi_2023.svg.png"
       />
 
     </section>

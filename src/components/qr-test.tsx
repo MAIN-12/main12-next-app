@@ -2,57 +2,67 @@
 import React from "react";
 import { QRCode } from 'react-qrcode-logo';
 
-const QRCodeWithLogoAndDots = ({
-    value,
-    logoUrl,
-}: {
+type LogoSize = "sm" | "md" | "lg";
+
+interface QRProbes {
+    size?: number;
     value: string;
     logoUrl: string;
-}) => {
+    ecLevel?: "L" | "M" | "Q" | "H";
+    logoSize?: LogoSize;
+}
 
-    const logoSize = 135
+const logoPresets: Record<
+    "L" | "M" | "Q" | "H",
+    Record<LogoSize, { logoWidth: number; padding: number }>
+> = {
+    L: {
+        sm: { logoWidth: 0.1, padding: 0.01 },
+        md: { logoWidth: 0.15, padding: 0.025 },
+        lg: { logoWidth: 0.19, padding: 0.01 },
+    },
+    M: {
+        sm: { logoWidth: 0.1, padding: 0.01 },
+        md: { logoWidth: 0.18, padding: 0.01 },
+        lg: { logoWidth: 0.25, padding: 0.022 },
+    },
+    Q: {
+        sm: { logoWidth: 0.1, padding: 0.01 },
+        md: { logoWidth: 0.18, padding: 0.01 },
+        lg: { logoWidth: 0.24, padding: 0.024 },
+    },
+    H: {
+        sm: { logoWidth: 0.16, padding: 0.01 },
+        md: { logoWidth: 0.21, padding: 0.019 },
+        lg: { logoWidth: 0.26, padding: 0.026 },
+    },
+};
 
-    const size = 500
-
-    const QRVariants: { size?: number; ecLevel: "L" | "M" | "Q" | "H"; padding: number; logoWidth?: number }[] = [
-        {
-            ecLevel: "H",
-            logoWidth: size * 0.2,
-            padding: size * 0.02
-        },
-        {
-            ecLevel: "H",
-            logoWidth: 80,
-            padding: 8
-        },
-        {
-            ecLevel: "L",
-            logoWidth: 80,
-            padding: 12
-        },
-
-    ]
-
-    const variant = 1
+const QRCodeWithLogoAndDots = ({
+    size = 200,
+    value,
+    logoUrl,
+    ecLevel = "Q",
+    logoSize = "md",
+}: QRProbes) => {
+    const preset = logoPresets[ecLevel][logoSize];
+    const logoWidth = size * preset.logoWidth;
+    const padding = size * preset.padding;
 
     return (
-        <div className="p-3 rounded bg-white pb-32">
+        <div className="p-2 rounded bg-white">
             <QRCode
                 value={value}
-                size={QRVariants[variant].size || size}
-                ecLevel={QRVariants[variant].ecLevel} //L | M | Q | H
-                // bgColor="#ffffff"
-                // fgColor="#000000"
+                size={size}
+                ecLevel={ecLevel}
+                bgColor="white"
                 qrStyle="dots"
-                eyeRadius={24}
-                // eyeColor="red"
+                eyeRadius={12}
                 logoImage={logoUrl}
-                logoWidth={QRVariants[variant].logoWidth}
-                // logoHeight={logoSize}
-                // logoOpacity={0.5}
-                logoPadding={QRVariants[variant].padding}
-                // logoPaddingStyle="circle" //square | circle
+                logoWidth={logoWidth}
+                logoPadding={padding}
                 removeQrCodeBehindLogo
+                quietZone={10}
             />
         </div>
     );
